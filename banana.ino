@@ -1,67 +1,43 @@
-/*
-DF Pong: Light with APDS-9999 (smoothed + auto calibration)
-Based on the DFPongController example "dfPongStarterLight".
-Changed to read brightness from the APDS-9999 instead of an LDR,
-with smoothing, a log scale and auto calibration at start-up
-(the APDS, smoothing, log scale and calibration parts, including adaptBright(), and the sound/look settings were written with Claude, Anthropic).
-
-Bright = paddle up, dark = paddle down.
-
-AUTO CALIBRATION:
-For the first 3 seconds after the Feather turns on, leave the sensor
-UNCOVERED if you can. The LED on A0 blinks fast while it measures.
-After that it keeps adjusting itself while you play (see adaptBright()),
-so you don't need to press reset when the light changes.
-
-Open the Serial Monitor at 9600 baud to see the readings.
-*/
+// for DF Pong, Wendy Meng
 
 #include <DFPongController.h>
 #include "Adafruit_APDS9999.h"
 
 DFPongController controller;
 Adafruit_APDS9999 apds;
-
-//your controller number (1 - 242): every player has a different one
 int controllerNumber = 14;
 
-//the pin your own LED is plugged into (long leg here, short leg to GND)
-//blinks fast while calibrating, blinks while looking for the game, stays on when connected
+// LED
 int ledPin = 26;   //26 = A0
 
-//light reading
+
 uint32_t lightValue = 0;
 
-//the reading when the sensor is fully covered: change this to yours
+// light sensor values: dark
 uint32_t darkValue = 150;
 //uint32_t darkValue = 250;
 
-//the reading in bright light: set at start-up, then keeps adjusting itself
+// light sensor values: light
 float brightValue = 800;
 //float brightValue = 1700;
 
-//how long to calibrate, in milliseconds
 unsigned long calibrationTime = 3000;
 
-//how much of the brightest reading counts as "fully bright" (0.0 - 1.0)
-//lower = easier to reach the top
+// brightest reading counts 
 float brightMargin = 0.9;
 
-//how fast brightValue follows a dimmer room while you play (0.0 - 1.0)
-//bigger = adapts faster, smaller = steadier
+// reading speed
 float adaptSpeed = 0.002;
 
 //smoothed light reading
 float smoothLight = 0;
 
 //how smooth the paddle is (0.0 - 1.0)
-//closer to 1.0 = smoother but slower, closer to 0 = faster but jumpier
 float smoothing = 0.92;
 float shownPos = 0.5;
 float maxStep = 0.01;
 
-//reads the brightness (green channel) from the APDS-9999
-//returns the last good reading if a read fails
+// sensor
 uint32_t readLight()
 {
   uint32_t r, g, b, ir;
@@ -112,11 +88,7 @@ void calibrateBright()
   smoothLight = brightValue;
 }
 
-//keeps adjusting brightValue while you play, so you never need to reset:
-//- a brighter reading than before raises brightValue straight away
-//- while the sensor is clearly uncovered, brightValue slowly drifts toward
-//  the current light, so it settles down again in a dimmer room
-//- while the sensor is covered (peel closed), nothing changes
+
 void adaptBright()
 {
   //brighter than the current "fully bright": move the bright end up
@@ -158,18 +130,16 @@ void setup()
   controller.setControllerNumber(controllerNumber);
   controller.setStatusLED(ledPin);   //connection light on your own LED
 
-  //how the banana looks and sounds in the game (played on the computer's speakers)
-  //preview every sound here: https://digitalfuturesocadu.github.io/df-pong/game/cc26/builder/
-  //the 3 sound files live in the public GitHub repository Wendy0416/banana-sounds
-  //peel sound: Pixabay (free licence); supermarket sound: BigSoundBank (CC0); "Banana!" recorded by me
-  controller.setControllerName("BananaThief");   //up to 20 characters
-  controller.setPlayerColor("#FFD23F");               //banana yellow paddle
+// banana color, size, sounds
+  controller.setControllerName("BananaThief");   
+  controller.setPlayerColor("#FFD23F");           
   controller.setHitSound("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/peelscore.mp3");
-  controller.setScoreSound("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/chew2.mp3");   //when you score: banana peel
-  controller.setWinSound("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/bananawin.mp3");     //when you win: "Banana!"
-  controller.setMusic("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/bgm2.mp3");   //background: supermarket sounds
+  controller.setScoreSound("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/chew2.mp3");  
+  controller.setWinSound("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/bananawin.mp3");     
+  controller.setMusic("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/bgm2.mp3");  
   controller.begin();
- controller.setPaddleSize(150);   //paddle size, 50 - 200 (bigger = easier to hit)
+ controller.setPaddleSize(150);   
+  //paddle size, 50 - 200 (bigger = easier to hit)
 }
 
 void loop()
@@ -195,7 +165,6 @@ void loop()
   //log scale: makes the middle of the range easier to hold
   float pos = (log(lightNow) - log(darkValue)) / (log(brightValue) - log(darkValue));
 
-  //1000 = bright = top, 0 = dark = bottom
   controller.sendPosition((int)(pos * 1000), 1000, 0);
 
   delay(20);
