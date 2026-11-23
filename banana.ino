@@ -138,8 +138,8 @@ void setup()
   controller.setWinSound("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/bananawin.mp3");     
   controller.setMusic("https://raw.githubusercontent.com/Wendy0416/banana-sounds/main/bgm2.mp3");  
   controller.begin();
- controller.setPaddleSize(150);   
-  //paddle size, 50 - 200 (bigger = easier to hit)
+ //controller.setPaddleSize(150);   
+
 }
 
 void loop()
